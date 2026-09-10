@@ -124,12 +124,12 @@
   .result-row:last-child{border-bottom:none;}
   .dot{width:14px; height:14px; border-radius:50%; flex:0 0 auto;}
   .badge{
-    font-family:'Oswald',sans-serif; font-size:13px; padding:3px 10px; border-radius:20px; font-weight:600;
+    font-family:'Oswald',sans-serif; font-size:20px; padding:5px 14px; border-radius:20px; font-weight:600;
   }
   .badge.car{background:#3F434822; color:var(--asphalt);}
   .badge.train{background:#2E7D6B22; color:var(--rail);}
   .reflect-btn{
-    width:60px; height:60px; border-radius:50%; border:4px solid #fff; box-shadow:0 0 0 2px #d8d2c2;
+    width:88px; height:88px; border-radius:50%; border:4px solid #fff; box-shadow:0 0 0 2px #d8d2c2;
     cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;
     display:flex; align-items:center; justify-content:center;
   }
@@ -214,7 +214,8 @@
       <div style="font-size:38px; font-weight:800; letter-spacing:6px;" id="roomCodeText"></div>
       <div style="font-size:13px; color:#666; margin-top:8px;">他の参加者に同じURLとこのコードを伝え、「オンラインでルームに参加する」から入ってもらってください</div>
       <div id="roomPlayersStatus" style="margin-top:12px;"></div>
-      <button class="primary" style="margin-top:14px;" onclick="hostBeginGame()">ゲームを開始する</button>
+      <button class="primary" id="hostBeginBtn" style="margin-top:14px;" onclick="hostBeginGame()">ゲームを開始する</button>
+      <div id="waitingForHostHint" class="hidden" style="margin-top:14px; color:#666; font-size:14px;">ホストが「ゲームを開始する」を押すと、全員のゲーム画面が始まります</div>
     </div>
   </div>
 
@@ -222,7 +223,7 @@
   <div id="screen-game" class="hidden">
     <div class="turn-banner">
       <div style="display:flex; align-items:center; gap:14px;">
-        <div class="t-num disp" id="turnLabel">TURN 1 / 12</div>
+        <div class="t-num disp" id="turnLabel">TURN 1 / 8</div>
         <div id="periodIcon" style="font-size:64px; line-height:1;"></div>
         <div class="t-period disp" id="periodLabel">MORNING RUSH</div>
       </div>
@@ -250,7 +251,7 @@
       <div id="resultList"></div>
       <div id="reflectionBox" style="margin-top:18px; padding:14px; background:rgba(255,255,255,0.6); border-radius:12px;">
         <div style="font-weight:700; font-size:15px; margin-bottom:10px;">今回の選択を振り返ってみると？</div>
-        <div id="reflectionButtons" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;"></div>
+        <div id="reflectionButtons" style="display:flex; gap:24px; justify-content:center; flex-wrap:wrap;"></div>
       </div>
       <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
         <button class="primary" id="nextBtn" onclick="nextTurn()">次のターンへ →</button>
@@ -335,6 +336,16 @@ function marginalCongestionContribution(periodName, totalPlayers, carCount){
 }
 
 // 時間帯：朝2ターン・昼2ターン・夕方2ターン・夜2ターン（計8ターン）。電車は時間帯に関係なく常に2マス固定。
+// ローカル版・オンライン版で共通の「結果一覧の1行」HTML生成
+function resultRowHtml(color, name, mode, advance, pos){
+  return `<div class="result-row">
+    <span class="dot" style="background:${color}"></span>
+    <span style="flex:1; font-size:20px;">${name}</span>
+    <span class="badge ${mode==='C'?'car':'train'}">${mode==='C'?'車 +'+advance+'マス':'電車 +'+advance+'マス'}</span>
+    <span style="font-size:18px; color:#6b6f74; width:130px; text-align:right;">現在地 ${pos}マス</span>
+  </div>`;
+}
+
 function periodOf(turn){
   if(turn<=2) return {name:'朝', icon:'🌅', color:'#5BAEDB', bg:'linear-gradient(180deg, #FDF6E3 0%, #FBEBC7 40%, #E8D9A8 70%, #C9D9A0 100%)'};
   if(turn<=4) return {name:'昼', icon:'☀️', color:'#E8B830', bg:'linear-gradient(180deg, #BEE3F5 0%, #DCF0FA 60%, #F5FBFF 100%)'};
@@ -361,9 +372,13 @@ function setMode(m){
   if(m==='online-host'){
     startBtn.textContent = 'ルームを作成する';
     startBtn.onclick = createRoom;
+    renderHostNameInput();
   } else {
     startBtn.textContent = 'ゲーム開始 → 1ターン目';
     startBtn.onclick = startGame;
+    if(m==='local'){
+      renderPlayerInputs(parseInt(document.getElementById('countDisp').textContent));
+    }
   }
 }
 
@@ -377,8 +392,9 @@ function createRoom(){
   const newPlayers = [];
   for(let i=0;i<n;i++){
     const nameEl = document.getElementById('pname'+i);
+    const typedName = nameEl ? nameEl.value.trim() : '';
     newPlayers.push({
-      id:i, name:(nameEl.value.trim()||('P'+(i+1))), color:COLORS[i],
+      id:i, name:(typedName || ('P'+(i+1))), color:COLORS[i],
       pos:0, co2:0, money:0, nuisance:0, connected:(i===0)
     });
   }
@@ -386,7 +402,7 @@ function createRoom(){
   isOnline = true; isHost = true; myPlayerId = 0;
   roomRef = db.ref('rooms/'+roomCode);
   roomRef.set({
-    turn:1, sessionNumber:1, phase:'choosing',
+    turn:1, sessionNumber:1, phase:'choosing', started:false,
     totalPlayers:n, totalTurns: TOTAL_TURNS,
     players:newPlayers, choices:{}, log:[]
   }).then(()=>{
@@ -407,6 +423,11 @@ function renderRoomPlayersStatus(){
 }
 
 function hostBeginGame(){
+  if(isOnline && roomRef){
+    roomRef.update({started:true}).catch(err=>{
+      alert('ゲーム開始の通知に失敗しました： ' + err.message);
+    });
+  }
   document.getElementById('screen-setup').classList.add('hidden');
   document.getElementById('screen-game').classList.remove('hidden');
   document.getElementById('localHint').classList.add('hidden');
@@ -442,11 +463,12 @@ function claimPlayer(id){
   roomRef = db.ref('rooms/'+roomCode);
   roomRef.child('players/'+id).update({ connected:true, name:finalName }).then(()=>{
     attachRoomListener();
-    document.getElementById('screen-setup').classList.add('hidden');
-    document.getElementById('screen-game').classList.remove('hidden');
-    document.getElementById('localHint').classList.add('hidden');
-    document.getElementById('localControls').classList.add('hidden');
-    document.getElementById('onlineControls').classList.remove('hidden');
+    document.getElementById('hostSetupBox').classList.add('hidden');
+    document.getElementById('onlineJoinBox').classList.add('hidden');
+    document.getElementById('roomCodeDisplay').classList.remove('hidden');
+    document.getElementById('roomCodeText').textContent = roomCode;
+    document.getElementById('hostBeginBtn').classList.add('hidden');
+    document.getElementById('waitingForHostHint').classList.remove('hidden');
   }).catch(err=>{
     alert('参加に失敗しました： ' + err.message);
   });
@@ -467,6 +489,16 @@ function attachRoomListener(){
     log = data.log || [];
     onlinePhase = data.phase || 'choosing';
     renderRoomPlayersStatus();
+
+    // ホストが「ゲームを開始する」を押したら、待機中の参加者も自動でゲーム画面に進む
+    const setupEl = document.getElementById('screen-setup');
+    if(data.started && setupEl && !setupEl.classList.contains('hidden')){
+      setupEl.classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('hidden');
+      document.getElementById('localHint').classList.add('hidden');
+      document.getElementById('localControls').classList.add('hidden');
+      document.getElementById('onlineControls').classList.remove('hidden');
+    }
 
     // 結果画面(screen-end)に留まっている参加者は、新セッションが始まったら自動でゲーム画面に戻す
     const endScreenEl = document.getElementById('screen-end');
@@ -491,20 +523,25 @@ function renderPeriodLabel(p){
   if(gameScreen){ gameScreen.style.background = p.bg; }
 }
 
+// ローカル版・オンライン版で共通の「顔アイコン1個分」HTML生成
+// idPrefix: DOM id用の識別子（ローカルはプレイヤーID、オンラインは'online'）
+// selectedValue: 選択済みの値（未選択ならnull/undefinedでOK）
+function reflectionOptionHtml(idPrefix, opt, selectedValue, onclickExpr){
+  return `<div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+    <button type="button" class="reflect-btn ${opt.value===selectedValue?'sel':''}" id="reflect-${idPrefix}-${opt.value}"
+      style="background:${opt.color};" onclick="${onclickExpr}">${reflectFaceSvg(opt.value)}</button>
+    <span style="font-size:16px; color:#6b6f74; text-align:center; width:100px; line-height:1.25; font-weight:600;">${opt.label}</span>
+  </div>`;
+}
+
 function renderOnlineReflectionButtons(){
   const el = document.getElementById('reflectionButtons');
   if(!el) return;
   const myEntry = log.slice().reverse().find(l => l.session===sessionNumber && l.turn===turn && l.playerId===myPlayerId);
   const currentVal = myEntry ? myEntry.reflection : '';
   el.innerHTML = `
-    <div style="display:flex; gap:8px;">
-      ${REFLECTION_OPTIONS.map(opt => `
-        <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-          <button type="button" class="reflect-btn ${opt.value===currentVal?'sel':''}" id="reflect-online-${opt.value}"
-            style="background:${opt.color};" onclick="pickOnlineReflection('${opt.value}')">${reflectFaceSvg(opt.value)}</button>
-          <span style="font-size:12px; color:#6b6f74; text-align:center; width:70px; line-height:1.25; font-weight:600;">${opt.label}</span>
-        </div>
-      `).join('')}
+    <div style="display:flex; gap:28px;">
+      ${REFLECTION_OPTIONS.map(opt => reflectionOptionHtml('online', opt, currentVal, `pickOnlineReflection('${opt.value}')`)).join('')}
     </div>
   `;
 }
@@ -550,12 +587,7 @@ function renderOnlineResults(p){
 
   const resultsHtml = turnLog.map(r=>{
     const pl = players.find(pp=>pp.id===r.playerId) || {color:'#999'};
-    return `<div class="result-row">
-      <span class="dot" style="background:${pl.color}"></span>
-      <span style="flex:1;">${r.name}</span>
-      <span class="badge ${r.mode==='C'?'car':'train'}">${r.mode==='C'?'車 +'+r.advance+'マス':'電車 +'+r.advance+'マス'}</span>
-      <span style="font-size:13px; color:#8a8e93; width:90px; text-align:right;">現在地 ${r.pos}マス</span>
-    </div>`;
+    return resultRowHtml(pl.color, r.name, r.mode, r.advance, r.pos);
   }).join('');
   document.getElementById('resultList').innerHTML = resultsHtml;
   renderOnlineReflectionButtons();
@@ -596,11 +628,12 @@ function hostAdvanceTurn(){
   });
   if(!allReflected){ alert('まだ振り返りを選んでいない人がいます'); return; }
   const nextTurnNum = turn + 1;
-  if(nextTurnNum > TOTAL_TURNS){
-    roomRef.update({ phase:'ended' });
-  } else {
-    roomRef.update({ turn: nextTurnNum, phase:'choosing' });
-  }
+  const updatePayload = (nextTurnNum > TOTAL_TURNS)
+    ? { phase:'ended' }
+    : { turn: nextTurnNum, phase:'choosing' };
+  roomRef.update(updatePayload).catch(err=>{
+    alert('次のターンへの更新に失敗しました： ' + err.message);
+  });
 }
 
 function renderOnlineChoiceGrid(){
@@ -655,7 +688,9 @@ function renderOnlineChoiceGrid(){
 
 function pickOnline(mode){
   if(myPlayerId===null || !roomRef) return;
-  roomRef.child('choices/'+myPlayerId).set(mode);
+  roomRef.child('choices/'+myPlayerId).set(mode).catch(err=>{
+    alert('選択の送信に失敗しました： ' + err.message);
+  });
 }
 
 function hostResolveTurn(){
@@ -706,6 +741,8 @@ function onlineNewSession(){
   }).then(()=>{
     document.getElementById('screen-end').classList.add('hidden');
     document.getElementById('screen-game').classList.remove('hidden');
+  }).catch(err=>{
+    alert('新しいセッションの開始に失敗しました： ' + err.message);
   });
 }
 
@@ -714,7 +751,11 @@ function changeCount(d){
   let n = parseInt(document.getElementById('countDisp').textContent);
   n = Math.max(4, Math.min(8, n+d));
   document.getElementById('countDisp').textContent = n;
-  renderPlayerInputs(n);
+  if(currentMode === 'online-host'){
+    renderHostNameInput();
+  } else {
+    renderPlayerInputs(n);
+  }
 }
 function renderPlayerInputs(n){
   const box = document.getElementById('playerInputs');
@@ -726,6 +767,14 @@ function renderPlayerInputs(n){
       <input type="text" placeholder="プレイヤー${i+1}" id="pname${i}">`;
     box.appendChild(row);
   }
+}
+function renderHostNameInput(){
+  const box = document.getElementById('playerInputs');
+  box.innerHTML = `<div class="player-setup-row">
+      <div class="swatch" style="background:${COLORS[0]}"></div>
+      <input type="text" placeholder="あなたの名前（ホスト）" id="pname0">
+    </div>
+    <div style="font-size:13px; color:#666; margin-top:6px;">他の参加者は、ルームに参加するときにそれぞれ自分の名前を入力します</div>`;
 }
 renderPlayerInputs(4);
 setMode('local');
@@ -921,12 +970,7 @@ function resolveTurn(){
       co2Cum:pl.co2, moneyCum:pl.money, nuisanceCum:pl.nuisance,
       pos:pl.pos, reflection:''
     });
-    resultsHtml += `<div class="result-row">
-      <span class="dot" style="background:${pl.color}"></span>
-      <span style="flex:1;">${pl.name}</span>
-      <span class="badge ${mode==='C'?'car':'train'}">${mode==='C'?'車 +'+carAdvance+'マス':'電車 +'+trainAdvance+'マス'}</span>
-      <span style="font-size:13px; color:#8a8e93; width:90px; text-align:right;">現在地 ${pl.pos}マス</span>
-    </div>`;
+    resultsHtml += resultRowHtml(pl.color, pl.name, mode, advance, pl.pos);
   });
 
   document.getElementById('resultTitle').textContent =
@@ -956,9 +1000,9 @@ function reflectFaceSvg(value){
     2: 'M 8 14 Q 12 12 16 14',
     3: 'M 8 13 L 16 13',
     4: 'M 8 12 Q 12 15 16 12',
-    5: 'M 7 11 Q 12 18 17 11'
+    5: 'M 7 13 Q 12 20 17 13'
   };
-  return `<svg viewBox="0 0 24 24" width="38" height="38">
+  return `<svg viewBox="0 0 24 24" width="56" height="56">
     <circle cx="8" cy="9" r="1.6" fill="#5a4632"/>
     <circle cx="16" cy="9" r="1.6" fill="#5a4632"/>
     <path d="${mouths[v]}" stroke="#5a4632" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -973,14 +1017,8 @@ function renderReflectionButtons(){
       <div style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px;">
         <span class="dot" style="background:${pl.color}; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>${pl.name}
       </div>
-      <div style="display:flex; gap:8px;">
-        ${REFLECTION_OPTIONS.map(opt => `
-          <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
-            <button type="button" class="reflect-btn" id="reflect-${pl.id}-${opt.value}"
-              style="background:${opt.color};" onclick="pickReflection('${pl.id}','${opt.value}')">${reflectFaceSvg(opt.value)}</button>
-            <span style="font-size:12px; color:#6b6f74; text-align:center; width:70px; line-height:1.25; font-weight:600;">${opt.label}</span>
-          </div>
-        `).join('')}
+      <div style="display:flex; gap:28px;">
+        ${REFLECTION_OPTIONS.map(opt => reflectionOptionHtml(pl.id, opt, null, `pickReflection('${pl.id}','${opt.value}')`)).join('')}
       </div>
     </div>
   `).join('');
