@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>新交通すごろく</title>
+<title>オンライン版交通すごろく</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1042,10 +1042,10 @@ function resolveTurn(){
   document.getElementById('choiceCard').classList.add('hidden');
 }
 
-// ターン終わりのプチ振り返り（5段階：失敗した…／こんなものか／まあまあ／うまくいった／成功！！）
+// ターン終わりのプチ振り返り（3段階：失敗…／まぁこんなものか／成功！！）
 const REFLECTION_OPTIONS = [
-  {value:'1', color:'#D9534F', label:'失敗した…'},
-  {value:'3', color:'#E8C34A', label:'こんなものか'},
+  {value:'1', color:'#D9534F', label:'失敗…'},
+  {value:'3', color:'#E8C34A', label:'まぁ、こんなものか'},
   {value:'5', color:'#5CA83C', label:'成功！！'}
 ];
 
