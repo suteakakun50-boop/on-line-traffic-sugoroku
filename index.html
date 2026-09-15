@@ -32,6 +32,7 @@
   .sub{color:#6b6f74; font-size:18px; margin-bottom:20px;}
   .wrap{max-width:1280px; width:94%; margin:0 auto;}
   #screen-game{
+    position:relative;
     padding:20px; border-radius:16px; margin:0 -20px;
     transition: background 0.8s ease;
   }
@@ -94,6 +95,18 @@
   .track-row:last-child .sq{ border-bottom:1px solid var(--asphalt); }
   .track-row .sq:last-child{ border-right:1px solid var(--asphalt); }
   .sq:nth-child(5n+1){ background:#FFF6E5; }
+  /* ---- 時間帯が変わった瞬間に出す演出（大きく表示→フェードアウト） ---- */
+  .period-transition{
+    position:absolute; inset:0; z-index:50; border-radius:20px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(20,20,28,0.6);
+    color:#fff; text-align:center;
+    opacity:0; pointer-events:none;
+    transition:opacity 0.6s ease;
+  }
+  .period-transition.show{ opacity:1; }
+  .pt-icon{ font-size:100px; line-height:1; }
+  .pt-label{ font-family:'Oswald',sans-serif; font-size:56px; font-weight:700; letter-spacing:0.08em; margin-top:10px; text-transform:uppercase; }
   /* ---- スマホ(幅480px以下)向け調整：マスとターン表示を画面に収まりやすくする ---- */
   @media (max-width: 480px){
     .sq{ width:56px; height:56px; }
@@ -231,6 +244,10 @@
 
   <!-- GAME -->
   <div id="screen-game" class="hidden">
+    <div id="periodTransition" class="period-transition">
+      <div id="periodTransitionIcon" class="pt-icon"></div>
+      <div id="periodTransitionLabel" class="pt-label"></div>
+    </div>
     <div class="turn-banner">
       <div style="display:flex; align-items:center; gap:14px;">
         <div class="t-num disp" id="turnLabel">TURN 1 / 8</div>
@@ -357,13 +374,19 @@ function resultRowHtml(color, name, mode, advance, pos){
 }
 
 function periodOf(turn){
-  if(turn<=2) return {name:'朝', icon:'🌅', color:'#5BAEDB', bg:'linear-gradient(180deg, #FDF6E3 0%, #FBEBC7 40%, #E8D9A8 70%, #C9D9A0 100%)'};
-  if(turn<=4) return {name:'昼', icon:'☀️', color:'#E8B830', bg:'linear-gradient(180deg, #BEE3F5 0%, #DCF0FA 60%, #F5FBFF 100%)'};
+  if(turn<=2) return {name:'朝', icon:'🌅', color:'#E8B830', bg:'linear-gradient(180deg, #FDF6E3 0%, #FBEBC7 40%, #E8D9A8 70%, #C9D9A0 100%)'};
+  if(turn<=4) return {name:'昼', icon:'☀️', color:'#5BAEDB', bg:'linear-gradient(180deg, #BEE3F5 0%, #DCF0FA 60%, #F5FBFF 100%)'};
   if(turn<=6) return {name:'夕方', icon:'🌇', color:'#D9622B', bg:'linear-gradient(180deg, #6B4E7A 0%, #C06B6B 35%, #E8956B 65%, #F2C078 100%)'};
   return {name:'夜', icon:'🌙', color:'#2E4374', bg:'linear-gradient(180deg, #0D1B3E 0%, #1B2E5C 50%, #2E4374 100%)'};
 }
 
 let players = [];
+let gameInProgress = false; // ゲーム開始後、ブラウザの戻る/閉じるで離脱確認を出すためのフラグ
+window.addEventListener('beforeunload', function(e){
+  if(!gameInProgress) return;
+  e.preventDefault();
+  e.returnValue = ''; // Chrome等で確認ダイアログを出すために必要
+});
 let turn = 1;
 let sessionNumber = 1; // 「もう一度プレイする」でインクリメント。複数回プレイの比較用にログには全セッション分残す
 let choices = {}; // playerId -> 'C' or 'T'
@@ -433,6 +456,7 @@ function renderRoomPlayersStatus(){
 }
 
 function hostBeginGame(){
+  gameInProgress = true;
   if(isOnline && roomRef){
     roomRef.update({started:true}).catch(err=>{
       alert('ゲーム開始の通知に失敗しました： ' + err.message);
@@ -503,6 +527,7 @@ function attachRoomListener(){
     // ホストが「ゲームを開始する」を押したら、待機中の参加者も自動でゲーム画面に進む
     const setupEl = document.getElementById('screen-setup');
     if(data.started && setupEl && !setupEl.classList.contains('hidden')){
+      gameInProgress = true;
       setupEl.classList.add('hidden');
       document.getElementById('screen-game').classList.remove('hidden');
       document.getElementById('localHint').classList.add('hidden');
@@ -531,6 +556,25 @@ function renderPeriodLabel(p){
   if(iconEl){ iconEl.textContent = p.icon; }
   const gameScreen = document.getElementById('screen-game');
   if(gameScreen){ gameScreen.style.background = p.bg; }
+  showPeriodTransition(p);
+}
+
+// 時間帯（朝/昼/夕方/夜）が実際に切り替わった瞬間だけ、大きく表示してフェードアウトする
+let lastShownPeriodName = null;
+function showPeriodTransition(p){
+  if(p.name === lastShownPeriodName) return; // 同じ時間帯の再描画では出さない
+  lastShownPeriodName = p.name;
+  const overlay = document.getElementById('periodTransition');
+  if(!overlay) return;
+  document.getElementById('periodTransitionIcon').textContent = p.icon;
+  document.getElementById('periodTransitionLabel').textContent = p.name;
+  overlay.style.background = p.bg;
+  overlay.style.color = (p.name === '朝' || p.name === '昼') ? '#22262B' : '#FFFFFF';
+  overlay.classList.add('show');
+  clearTimeout(window._periodTransitionTimer);
+  window._periodTransitionTimer = setTimeout(()=>{
+    overlay.classList.remove('show');
+  }, 1800);
 }
 
 // ローカル版・オンライン版で共通の「顔アイコン1個分」HTML生成
@@ -790,6 +834,7 @@ renderPlayerInputs(4);
 setMode('local');
 
 function startGame(){
+  gameInProgress = true;
   const n = parseInt(document.getElementById('countDisp').textContent);
   players = [];
   for(let i=0;i<n;i++){
