@@ -1042,23 +1042,21 @@ function resolveTurn(){
   document.getElementById('choiceCard').classList.add('hidden');
 }
 
-// ターン終わりのプチ振り返り（3段階：失敗…／まぁこんなものか／成功！！）
+// ターン終わりのプチ振り返り（3段階：1=失敗した…／2=まぁ、こんなものか／3=成功！！）
 const REFLECTION_OPTIONS = [
   {value:'1', color:'#D9534F', label:'失敗…'},
-  {value:'3', color:'#E8C34A', label:'まぁ、こんなものか'},
-  {value:'5', color:'#5CA83C', label:'成功！！'}
+  {value:'2', color:'#E8C34A', label:'まぁ、こんなものか'},
+  {value:'3', color:'#5CA83C', label:'成功！！'}
 ];
 
 // 5段階の顔アイコン(SVG)を生成。value: 1(悪い)〜5(良い)
 function reflectFaceSvg(value){
   const v = Number(value);
-  // 口の形を悪い(への字)〜良い(にっこり)まで補間
+  // 口の形を悪い(への字)〜良い(にっこり)まで3段階で用意
   const mouths = {
     1: 'M 8 15 Q 12 10 16 15',
-    2: 'M 8 14 Q 12 12 16 14',
-    3: 'M 8 13 L 16 13',
-    4: 'M 8 12 Q 12 15 16 12',
-    5: 'M 7 13 Q 12 20 17 13'
+    2: 'M 8 13 L 16 13',
+    3: 'M 7 13 Q 12 20 17 13'
   };
   return `<svg viewBox="0 0 24 24" width="56" height="56">
     <circle cx="8" cy="9" r="1.6" fill="#5a4632"/>
@@ -1169,13 +1167,18 @@ function downloadCSV(){
     const n = rows.length || 1;
     const totalChoices = rows.reduce((s,r)=>s+r.車回数_回+r.電車回数_回,0) || 1;
     const carChoices = rows.reduce((s,r)=>s+r.車回数_回,0);
+    const sessReflected = log.filter(l=>l.session===sess && l.reflection);
+    const reflectAvgSession = sessReflected.length
+      ? Number((sessReflected.reduce((s,l)=>s+Number(l.reflection),0) / sessReflected.length).toFixed(2))
+      : null;
     return {
       セッション:sess,
       参加人数_人:rows.length,
       車選択率_percent:Number((carChoices/totalChoices*100).toFixed(1)),
       平均CO2_kg:Number((rows.reduce((s,r)=>s+r.CO2合計_kg,0)/n).toFixed(2)),
       平均出費_円:Math.round(rows.reduce((s,r)=>s+r.出費合計_円,0)/n),
-      平均到達マス数:Number((rows.reduce((s,r)=>s+r.最終位置_マス,0)/n).toFixed(1))
+      平均到達マス数:Number((rows.reduce((s,r)=>s+r.最終位置_マス,0)/n).toFixed(1)),
+      振り返り平均値_1_2_3:reflectAvgSession
     };
   });
 
@@ -1197,12 +1200,32 @@ function downloadCSV(){
     if(totalTurns===0) maxStreak = 0;
 
     const trainAdvanceFixed = 4;
-    const betterChoiceCount = entries.filter(e=>{
+    // 各ターンで「得な選択」だったかどうか（客観的にどちらが多く進めたか）
+    const betterFlags = entries.map(e=>{
       const carAdv = carAdvanceFor(e.period, players.length, e.carCount);
       const otherAdv = e.mode==='C' ? trainAdvanceFixed : carAdv;
       const ownAdv = e.mode==='C' ? carAdv : trainAdvanceFixed;
       return ownAdv >= otherAdv;
-    }).length;
+    });
+    const betterChoiceCount = betterFlags.filter(Boolean).length;
+
+    const nuisanceSum = entries.reduce((s,e)=>s+(e.nuisanceTurn||0), 0);
+
+    // 振り返り（3択：1=失敗した…／3=まぁ、こんなものか／5=成功！！）の集計
+    const reflectedEntries = entries.filter(e=>e.reflection);
+    const reflectAvg = reflectedEntries.length
+      ? Number((reflectedEntries.reduce((s,e)=>s+Number(e.reflection),0) / reflectedEntries.length).toFixed(2))
+      : null;
+
+    // 認知的不協和（行動と内心のズレ）：客観的に得な選択なのに「失敗した…」を選ぶ／損な選択なのに「成功！！」を選ぶ回数
+    const dissonanceCount = entries.reduce((count, e, i)=>{
+      if(!e.reflection) return count;
+      const isBetter = betterFlags[i];
+      const feltFail = e.reflection === '1';
+      const feltSuccess = e.reflection === '3';
+      if((isBetter && feltFail) || (!isBetter && feltSuccess)) return count+1;
+      return count;
+    }, 0);
 
     return {
       セッション:sess, プレイヤー番号:pid+1, 名前:entries[0] ? entries[0].name : '',
@@ -1210,7 +1233,14 @@ function downloadCSV(){
       連続同一最大_回:maxStreak,
       車割合_percent:totalTurns ? Number((carN/totalTurns*100).toFixed(1)) : 0,
       電車割合_percent:totalTurns ? Number((trainN/totalTurns*100).toFixed(1)) : 0,
-      得な選択割合_percent:totalTurns ? Number((betterChoiceCount/totalTurns*100).toFixed(1)) : 0
+      得な選択割合_percent:totalTurns ? Number((betterChoiceCount/totalTurns*100).toFixed(1)) : 0,
+      自他影響度合計:Number(nuisanceSum.toFixed(2)),
+      自他影響度平均:totalTurns ? Number((nuisanceSum/totalTurns).toFixed(2)) : 0,
+      振り返り_失敗回数:entries.filter(e=>e.reflection==='1').length,
+      振り返り_こんなものか回数:entries.filter(e=>e.reflection==='2').length,
+      振り返り_成功回数:entries.filter(e=>e.reflection==='3').length,
+      振り返り平均値_1_2_3:reflectAvg,
+      認知的不協和回数:dissonanceCount
     };
   });
 
