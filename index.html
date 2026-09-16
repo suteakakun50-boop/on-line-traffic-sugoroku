@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" id="htmlRoot">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>オンライン版交通すごろく</title>
+<title id="pageTitleEl">オンライン版交通すごろく</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -182,50 +182,53 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>交通すごろく</h1>
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+    <h1 id="appTitleEl">交通すごろく</h1>
+    <button class="ghost" id="langToggleBtn" style="padding:8px 16px; font-size:13px;" onclick="toggleLang()">EN</button>
+  </div>
 
   <!-- START -->
   <div id="screen-start" class="card">
     <div style="margin-bottom:20px; padding:24px; background:#FFF6E5; border-radius:14px; border:2px solid #E8B830;">
-      <div style="font-weight:800; font-size:26px; margin-bottom:14px;">あそびかた</div>
-      <div style="font-size:19px; margin-bottom:14px;">4〜8人で遊びます</div>
+      <div style="font-weight:800; font-size:26px; margin-bottom:14px;" id="txt_howToPlay">あそびかた</div>
+      <div style="font-size:19px; margin-bottom:14px;" id="txt_playerCount">4〜8人で遊びます</div>
 
-      <div style="font-weight:700; font-size:20px; margin-bottom:6px;">① 毎ターン、移動手段を選ぶ</div>
-      <div style="font-size:18px; margin-bottom:14px; margin-left:10px;">🚗 CAR（車）　または　🚆 TRAIN（電車）</div>
+      <div style="font-weight:700; font-size:20px; margin-bottom:6px;" id="txt_rule1title">① 毎ターン、移動手段を選ぶ</div>
+      <div style="font-size:18px; margin-bottom:14px; margin-left:10px;" id="txt_rule1body">🚗 CAR（車）　または　🚆 TRAIN（電車）</div>
 
-      <div style="font-weight:700; font-size:20px; margin-bottom:6px;">② 選んだ移動手段で進む</div>
-      <div style="font-size:18px; margin-bottom:4px; margin-left:10px;">🚆 電車：いつも4マス進みます</div>
-      <div style="font-size:18px; margin-bottom:14px; margin-left:10px;">🚗 車：0〜最大10マス（時間帯や混み具合によって変わり、出す人が多いほど進めなくなります）</div>
+      <div style="font-weight:700; font-size:20px; margin-bottom:6px;" id="txt_rule2title">② 選んだ移動手段で進む</div>
+      <div style="font-size:18px; margin-bottom:4px; margin-left:10px;" id="txt_rule2train">🚆 電車：いつも4マス進みます</div>
+      <div style="font-size:18px; margin-bottom:14px; margin-left:10px;" id="txt_rule2car">🚗 車：0〜最大10マス（時間帯や混み具合によって変わり、出す人が多いほど進めなくなります）</div>
 
-      <div style="font-weight:700; font-size:20px; margin-bottom:6px;">③ 8ターン遊ぶ</div>
-      <div style="font-size:18px; margin-left:10px;">8ターン終了時に、一番先まで進んでいる人の勝ち！</div>
+      <div style="font-weight:700; font-size:20px; margin-bottom:6px;" id="txt_rule3title">③ 8ターン遊ぶ</div>
+      <div style="font-size:18px; margin-left:10px;" id="txt_rule3body">8ターン終了時に、一番先まで進んでいる人の勝ち！</div>
     </div>
-    <button class="primary" onclick="document.getElementById('screen-start').classList.add('hidden'); document.getElementById('screen-setup').classList.remove('hidden');">はじめる →</button>
+    <button class="primary" id="btn_begin" onclick="document.getElementById('screen-start').classList.add('hidden'); document.getElementById('screen-setup').classList.remove('hidden');">はじめる →</button>
   </div>
 
   <!-- SETUP -->
   <div id="screen-setup" class="card hidden">
     <div id="modeSwitchButtons" style="margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="ghost" onclick="setMode('local')">ローカルで遊ぶ</button>
-      <button class="ghost" onclick="setMode('online-host')">オンラインでルームを作る（ホスト）</button>
-      <button class="ghost" onclick="setMode('online-join')">オンラインでルームに参加する</button>
+      <button class="ghost" id="btn_modeLocal" onclick="setMode('local')">ローカルで遊ぶ</button>
+      <button class="ghost" id="btn_modeHost" onclick="setMode('online-host')">オンラインでルームを作る（ホスト）</button>
+      <button class="ghost" id="btn_modeJoin" onclick="setMode('online-join')">オンラインでルームに参加する</button>
     </div>
 
     <div id="onlineJoinBox" class="hidden" style="margin-bottom:18px; padding:14px; background:#f7f7f7; border-radius:10px;">
-      <div style="font-weight:700; margin-bottom:8px; font-size:16px;">ルームコードを入力</div>
+      <div style="font-weight:700; margin-bottom:8px; font-size:16px;" id="txt_enterCode">ルームコードを入力</div>
       <input type="text" id="joinCodeInput" placeholder="例：1234" style="padding:8px; width:140px; font-size:16px;">
-      <button class="primary" onclick="joinRoom()">コードで検索</button>
+      <button class="primary" id="btn_searchCode" onclick="joinRoom()">コードで検索</button>
       <div id="joinPlayerList" style="margin-top:12px;"></div>
     </div>
 
     <div id="hostSetupBox">
-      <div style="font-weight:700; margin-bottom:10px; font-size:18px;">① 参加人数</div>
+      <div style="font-weight:700; margin-bottom:10px; font-size:18px;" id="txt_playerCountTitle">① 参加人数</div>
       <div class="stepper">
         <button onclick="changeCount(-1)">−</button>
         <div class="n disp" id="countDisp">4</div>
         <button onclick="changeCount(1)">＋</button>
       </div>
-      <div style="font-weight:700; margin-bottom:10px; font-size:18px;">② プレイヤー名（任意）</div>
+      <div style="font-weight:700; margin-bottom:10px; font-size:18px;" id="txt_playerNameTitle">② プレイヤー名（任意）</div>
       <div id="playerInputs"></div>
       <div style="margin-top:18px;">
         <button class="primary" id="startBtn" onclick="startGame()">ゲーム開始 → 1ターン目</button>
@@ -233,12 +236,12 @@
     </div>
 
     <div id="roomCodeDisplay" class="hidden" style="margin-top:18px; padding:18px; background:#eef2fb; border-radius:10px; text-align:center;">
-      <div style="font-size:14px; color:#666;">ルームコード</div>
+      <div style="font-size:14px; color:#666;" id="txt_roomCodeLabel">ルームコード</div>
       <div style="font-size:38px; font-weight:800; letter-spacing:6px;" id="roomCodeText"></div>
-      <div style="font-size:13px; color:#666; margin-top:8px;">他の参加者に同じURLとこのコードを伝え、「オンラインでルームに参加する」から入ってもらってください</div>
+      <div style="font-size:13px; color:#666; margin-top:8px;" id="txt_shareHint">他の参加者に同じURLとこのコードを伝え、「オンラインでルームに参加する」から入ってもらってください</div>
       <div id="roomPlayersStatus" style="margin-top:12px;"></div>
       <button class="primary" id="hostBeginBtn" style="margin-top:14px;" onclick="hostBeginGame()">ゲームを開始する</button>
-      <div id="waitingForHostHint" class="hidden" style="margin-top:14px; color:#666; font-size:14px;">ホストが「ゲームを開始する」を押すと、全員のゲーム画面が始まります</div>
+      <div id="waitingForHostHint" class="hidden" style="margin-top:14px; color:#666; font-size:14px;" data-i18n="waitingHostHint">ホストが「ゲームを開始する」を押すと、全員のゲーム画面が始まります</div>
     </div>
   </div>
 
@@ -264,11 +267,11 @@
 
     <div class="card" id="choiceCard">
       <div style="font-weight:700; margin-bottom:4px; font-size:18px;" id="choiceCardTitle">このターンの選択</div>
-      <div class="hint" id="localHint" style="margin-bottom:10px;">全員が選び終えたら「このターンを確定」を押してください</div>
+      <div class="hint" id="localHint" style="margin-bottom:10px;" data-i18n="localHint">全員が選び終えたら「このターンを確定」を押してください</div>
       <div class="choice-grid" id="choiceGrid"></div>
       <div id="localControls" style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
         <button class="primary" id="confirmBtn" onclick="resolveTurn()">このターンを確定 →</button>
-        <button class="ghost" onclick="resetChoices()">選択をリセット</button>
+        <button class="ghost" id="btn_resetChoices" onclick="resetChoices()">選択をリセット</button>
       </div>
       <div id="onlineControls" class="hidden" style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;"></div>
     </div>
@@ -277,7 +280,7 @@
       <div style="font-weight:700; margin-bottom:8px; font-size:18px;" id="resultTitle">結果</div>
       <div id="resultList"></div>
       <div id="reflectionBox" style="margin-top:18px; padding:14px; background:rgba(255,255,255,0.6); border-radius:12px;">
-        <div style="font-weight:700; font-size:15px; margin-bottom:10px;">今回の選択を振り返ってみると？</div>
+        <div style="font-weight:700; font-size:15px; margin-bottom:10px;" data-i18n="reflectionPrompt">今回の選択を振り返ってみると？</div>
         <div id="reflectionButtons" style="display:flex; gap:24px; justify-content:center; flex-wrap:wrap;"></div>
       </div>
       <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
@@ -289,16 +292,16 @@
   <!-- END -->
   <div id="screen-end" class="hidden card">
     <h1 style="font-size:20px;" id="endTitle">結果発表</h1>
-    <div class="sub">あなたの選択が、渋滞・CO₂・出費にどれだけ影響したかを振り返ってみましょう</div>
+    <div class="sub" data-i18n="endSubtitle">あなたの選択が、渋滞・CO₂・出費にどれだけ影響したかを振り返ってみましょう</div>
     <div id="endRanking"></div>
-    <div class="chart-title">最終 CO₂ 合計 (kg)</div>
+    <div class="chart-title" data-i18n="chartCo2">最終 CO₂ 合計 (kg)</div>
     <div id="endCo2Chart"></div>
-    <div class="chart-title">最終 出費 合計 (円)</div>
+    <div class="chart-title" data-i18n="chartMoney">最終 出費 合計 (円)</div>
     <div id="endMoneyChart"></div>
-    <div class="chart-title">このセッションの社会全体のCO₂排出量</div>
+    <div class="chart-title" data-i18n="chartSocial">このセッションの社会全体のCO₂排出量</div>
     <div id="endSocialCo2Chart"></div>
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
-      <button class="primary" onclick="downloadCSV()">Excelでダウンロード（全セッション分）</button>
+      <button class="primary" id="btn_downloadCsv" onclick="downloadCSV()">Excelでダウンロード（全セッション分）</button>
       <button class="ghost" id="replayBtn" onclick="newSession()">もう一度プレイする</button>
       <button class="ghost" id="setupReplayBtn" onclick="newSessionWithSetup()">プレイヤー構成を変えてもう一度</button>
     </div>
@@ -306,6 +309,318 @@
 </div>
 
 <script>
+// ============================================================
+// 多言語対応（日本語 / 英語）。ゲーム画面の文言のみが対象で、
+// Excel出力（downloadCSV内の列名）は仕様により日本語のまま固定。
+// ============================================================
+let LANG = 'ja';
+
+const I18N = {
+  ja: {
+    pageTitle: 'オンライン版交通すごろく',
+    appTitle: '交通すごろく',
+    langToggleLabel: 'EN',
+    howToPlay: 'あそびかた',
+    playerCount: '4〜8人で遊びます',
+    rule1title: '① 毎ターン、移動手段を選ぶ',
+    rule1body: '🚗 CAR（車）　または　🚆 TRAIN（電車）',
+    rule2title: '② 選んだ移動手段で進む',
+    rule2train: '🚆 電車：いつも4マス進みます',
+    rule2car: '🚗 車：0〜最大10マス（時間帯や混み具合によって変わり、出す人が多いほど進めなくなります）',
+    rule3title: '③ 8ターン遊ぶ',
+    rule3body: '8ターン終了時に、一番先まで進んでいる人の勝ち！',
+    beginBtn: 'はじめる →',
+    modeLocal: 'ローカルで遊ぶ',
+    modeHost: 'オンラインでルームを作る（ホスト）',
+    modeJoin: 'オンラインでルームに参加する',
+    enterCode: 'ルームコードを入力',
+    codePlaceholder: '例：1234',
+    searchCode: 'コードで検索',
+    playerCountTitle: '① 参加人数',
+    playerNameTitle: '② プレイヤー名（任意）',
+    startGameBtn: 'ゲーム開始 → 1ターン目',
+    createRoomBtn: 'ルームを作成する',
+    roomCodeLabel: 'ルームコード',
+    shareHint: '他の参加者に同じURLとこのコードを伝え、「オンラインでルームに参加する」から入ってもらってください',
+    hostBeginBtnReady: 'ゲームを開始する',
+    waitingJoinCount: n => `全員の参加待ち（${n.connected}/${n.total}人）`,
+    waitingHostHint: 'ホストが「ゲームを開始する」を押すと、全員のゲーム画面が始まります',
+    choiceTitle: 'このターンの選択',
+    localHint: '全員が選び終えたら「このターンを確定」を押してください',
+    confirmTurnBtn: 'このターンを確定 →',
+    resetChoicesBtn: '選択をリセット',
+    waitingChoiceCount: n => `全員の選択待ち（${n.done}/${n.total}人）`,
+    resultTitle: '結果',
+    reflectionPrompt: '今回の選択を振り返ってみると？',
+    nextTurnBtn: '次のターンへ →',
+    viewFinalBtn: '最終結果を見る →',
+    endSubtitle: 'あなたの選択が、渋滞・CO₂・出費にどれだけ影響したかを振り返ってみましょう',
+    chartCo2: '最終 CO₂ 合計 (kg)',
+    chartMoney: '最終 出費 合計 (円)',
+    chartSocial: 'このセッションの社会全体のCO₂排出量',
+    downloadBtn: 'Excelでダウンロード（全セッション分）',
+    setupReplayBtn: 'プレイヤー構成を変えてもう一度',
+    endTitle: (turns, sess) => `${turns}ターン終了 — 結果発表（セッション${sess}）`,
+    replayLocal: sess => `もう一度プレイする（セッション${sess}として記録されます）`,
+    replayHost: sess => `【ホスト】もう一度プレイする（セッション${sess}）`,
+    replayWaitHost: 'ホストの再戦を待っています',
+    playerNamePlaceholder: i => `プレイヤー${i}`,
+    hostNamePlaceholder: 'あなたの名前（ホスト）',
+    hostNameHint: '他の参加者は、ルームに参加するときにそれぞれ自分の名前を入力します',
+    joinTapHint: '参加する枠をタップし、あなたの名前を入力してください：',
+    joined: '（参加済み）',
+    joining: '参加中…',
+    notJoined: '（未参加）',
+    enterYourName: 'あなたの名前を入力してください',
+    you: '（あなた）',
+    selectedMark: '選択済み ✓',
+    choosingMark: '選択中…',
+    notJoinedMark: '未参加',
+    everyoneReady: '全員そろいました。確定できます。',
+    waitEveryoneChoose: '全員の選択がそろうまでボタンは押せません',
+    hostWillConfirm: 'ホストが「このターンを確定」を押すと次のターンに進みます',
+    hostConfirmBtn: n => `【ホスト】このターンを確定して次へ →`,
+    hostWaitingChoiceCount: n => `【ホスト】全員の選択待ち（${n.done}/${n.total}人）`,
+    hostViewFinalBtn: '【ホスト】最終結果を見る →',
+    hostNextTurnBtn: '【ホスト】次のターンへ →',
+    waitingReflectionCount: n => `全員の振り返り待ち（${n.done}/${n.total}人）`,
+    hostWillAdvance: 'ホストが次のターンへ進めるのを待っています…',
+    modeWord: m => m==='C' ? '車' : '電車',
+    sqUnit: 'マス',
+    positionLabel: '現在地',
+    resultHeaderLocal: (period, carN, trainN, carAdv, trainAdv) => `結果：${period}／車 ${carN}人・電車 ${trainN}人（車 ${carAdv}マス／電車 ${trainAdv}マス）`,
+    resultHeaderOnline: (period, carN, trainN, carAdvPart, trainAdvPart) => `結果：${period}／車 ${carN}人・電車 ${trainN}人${carAdvPart}${trainAdvPart}`,
+    reflectFail: '失敗…',
+    reflectSoso: 'まぁ、こんなものか',
+    reflectSuccess: '成功！！',
+    reached: '到達',
+    sq: 'マス',
+    co2Money: (co2, money) => `CO₂ ${co2}kg／出費 ${money}円`,
+    socialTotalLabel: 'みんなで合計',
+    socialTotalSub: (n, turns) => `${n}人 × ${turns}ターンで排出したCO₂の合計`,
+    unitYen: ' 円',
+    unitKg: ' kg',
+    periodNames: {'朝':'朝','昼':'昼','夕方':'夕方','夜':'夜'},
+    alert_firebaseFail: 'オンライン機能を読み込めませんでした。インターネット接続を確認し、ページを再読み込みしてください。',
+    alert_createRoomFail: err => 'ルーム作成に失敗しました： ' + err,
+    alert_watchRoomFail: err => 'ルームの監視に失敗しました： ' + err,
+    alert_joinFail: err => '参加に失敗しました： ' + err,
+    alert_notAllJoined: 'まだ参加していない人がいます。全員が参加するまで開始できません。',
+    alert_startNotifyFail: err => 'ゲーム開始の通知に失敗しました： ' + err,
+    alert_notAllReflected: 'まだ振り返りを選んでいない人がいます',
+    alert_advanceFail: err => '次のターンへの更新に失敗しました： ' + err,
+    alert_sendChoiceFail: err => '選択の送信に失敗しました： ' + err,
+    alert_notAllChosen: 'まだ選んでいない人がいます',
+    alert_updateFail: err => '更新に失敗しました： ' + err,
+    alert_hostOnly: 'ホストのみ操作できます',
+    alert_newSessionFail: err => '新しいセッションの開始に失敗しました： ' + err,
+    alert_missingPlayers: names => '未選択のプレイヤーがいます：' + names,
+    alert_needAllReflections: '全員が振り返りを選ぶまで、次のターンには進めません',
+  },
+  en: {
+    pageTitle: 'Online Traffic Sugoroku',
+    appTitle: 'Traffic Sugoroku',
+    langToggleLabel: '日本語',
+    howToPlay: 'How to Play',
+    playerCount: 'Play with 4–8 people',
+    rule1title: '① Each turn, choose your mode of transport',
+    rule1body: '🚗 CAR or 🚆 TRAIN',
+    rule2title: '② Move forward based on your choice',
+    rule2train: '🚆 Train: always advances 4 squares',
+    rule2car: '🚗 Car: 0 to 10 squares (varies by time of day and congestion — the more people choose car, the less everyone advances)',
+    rule3title: '③ Play 8 turns',
+    rule3body: 'Whoever has advanced the furthest after 8 turns wins!',
+    beginBtn: 'Start →',
+    modeLocal: 'Play locally',
+    modeHost: 'Create an online room (host)',
+    modeJoin: 'Join an online room',
+    enterCode: 'Enter room code',
+    codePlaceholder: 'e.g. 1234',
+    searchCode: 'Search by code',
+    playerCountTitle: '① Number of players',
+    playerNameTitle: '② Player names (optional)',
+    startGameBtn: 'Start game → Turn 1',
+    createRoomBtn: 'Create room',
+    roomCodeLabel: 'Room code',
+    shareHint: 'Share this URL and code with the other players, and have them join via "Join an online room"',
+    hostBeginBtnReady: 'Start the game',
+    waitingJoinCount: n => `Waiting for everyone to join (${n.connected}/${n.total})`,
+    waitingHostHint: 'Once the host presses "Start the game", everyone\'s game screen will begin',
+    choiceTitle: 'This turn\'s choice',
+    localHint: 'Once everyone has chosen, press "Confirm this turn"',
+    confirmTurnBtn: 'Confirm this turn →',
+    resetChoicesBtn: 'Reset choices',
+    waitingChoiceCount: n => `Waiting for everyone to choose (${n.done}/${n.total})`,
+    resultTitle: 'Result',
+    reflectionPrompt: 'Looking back on this choice...',
+    nextTurnBtn: 'Next turn →',
+    viewFinalBtn: 'View final results →',
+    endSubtitle: 'Let\'s look back at how your choices affected congestion, CO₂, and spending',
+    chartCo2: 'Final total CO₂ (kg)',
+    chartMoney: 'Final total spending (¥)',
+    chartSocial: 'Total CO₂ emissions for this session (everyone combined)',
+    downloadBtn: 'Download Excel (all sessions)',
+    setupReplayBtn: 'Change players and play again',
+    endTitle: (turns, sess) => `${turns} turns complete — Results (Session ${sess})`,
+    replayLocal: sess => `Play again (recorded as Session ${sess})`,
+    replayHost: sess => `[Host] Play again (Session ${sess})`,
+    replayWaitHost: 'Waiting for the host to start a rematch',
+    playerNamePlaceholder: i => `Player ${i}`,
+    hostNamePlaceholder: 'Your name (host)',
+    hostNameHint: 'Other participants will each enter their own name when they join the room',
+    joinTapHint: 'Tap a slot to join and enter your name:',
+    joined: '(joined)',
+    joining: 'Joining…',
+    notJoined: '(not joined)',
+    enterYourName: 'Please enter your name',
+    you: '(You)',
+    selectedMark: 'Selected ✓',
+    choosingMark: 'Choosing…',
+    notJoinedMark: 'Not joined',
+    everyoneReady: 'Everyone is ready. You can confirm.',
+    waitEveryoneChoose: 'This button is disabled until everyone has chosen',
+    hostWillConfirm: 'The next turn begins once the host presses "Confirm this turn"',
+    hostConfirmBtn: n => `[Host] Confirm this turn and continue →`,
+    hostWaitingChoiceCount: n => `[Host] Waiting for everyone to choose (${n.done}/${n.total})`,
+    hostViewFinalBtn: '[Host] View final results →',
+    hostNextTurnBtn: '[Host] Next turn →',
+    waitingReflectionCount: n => `Waiting for everyone's reflection (${n.done}/${n.total})`,
+    hostWillAdvance: 'Waiting for the host to advance to the next turn…',
+    modeWord: m => m==='C' ? 'Car' : 'Train',
+    sqUnit: ' sq',
+    positionLabel: 'Position',
+    resultHeaderLocal: (period, carN, trainN, carAdv, trainAdv) => `Result: ${period} — Car: ${carN}, Train: ${trainN} (Car +${carAdv} sq / Train +${trainAdv} sq)`,
+    resultHeaderOnline: (period, carN, trainN, carAdvPart, trainAdvPart) => `Result: ${period} — Car: ${carN}, Train: ${trainN}${carAdvPart}${trainAdvPart}`,
+    reflectFail: 'Not great…',
+    reflectSoso: 'Eh, it\'s fine',
+    reflectSuccess: 'Success!!',
+    reached: 'Reached',
+    sq: ' sq',
+    co2Money: (co2, money) => `CO₂ ${co2}kg / Spending ¥${money}`,
+    socialTotalLabel: 'Combined total',
+    socialTotalSub: (n, turns) => `Total CO₂ from ${n} people × ${turns} turns`,
+    unitYen: ' JPY',
+    unitKg: ' kg',
+    periodNames: {'朝':'Morning','昼':'Midday','夕方':'Evening','夜':'Night'},
+    alert_firebaseFail: 'Failed to load online features. Please check your internet connection and reload the page.',
+    alert_createRoomFail: err => 'Failed to create room: ' + err,
+    alert_watchRoomFail: err => 'Failed to watch the room: ' + err,
+    alert_joinFail: err => 'Failed to join: ' + err,
+    alert_notAllJoined: 'Not everyone has joined yet. You cannot start until everyone has joined.',
+    alert_startNotifyFail: err => 'Failed to notify that the game has started: ' + err,
+    alert_notAllReflected: 'Someone has not chosen a reflection yet',
+    alert_advanceFail: err => 'Failed to advance to the next turn: ' + err,
+    alert_sendChoiceFail: err => 'Failed to submit your choice: ' + err,
+    alert_notAllChosen: 'Someone has not chosen yet',
+    alert_updateFail: err => 'Failed to update: ' + err,
+    alert_hostOnly: 'Only the host can do this',
+    alert_newSessionFail: err => 'Failed to start a new session: ' + err,
+    alert_missingPlayers: names => 'The following players have not chosen: ' + names,
+    alert_needAllReflections: 'You cannot move to the next turn until everyone has chosen a reflection',
+  }
+};
+
+function t(key){
+  const v = I18N[LANG][key];
+  return v;
+}
+
+// 内部ロジック（CAR_TABLESのキー・Excelのperiod列）は常に日本語の名前を使い、
+// 画面表示だけを言語に応じて切り替える
+function periodDisplay(nameJa){
+  return I18N[LANG].periodNames[nameJa] || nameJa;
+}
+
+// 静的な文言（ゲームの進行状態に依存しないテキスト）をまとめて反映する
+function applyStaticText(){
+  document.getElementById('pageTitleEl').textContent = t('pageTitle');
+  document.getElementById('appTitleEl').textContent = t('appTitle');
+  document.getElementById('langToggleBtn').textContent = t('langToggleLabel');
+  document.getElementById('txt_howToPlay').textContent = t('howToPlay');
+  document.getElementById('txt_playerCount').textContent = t('playerCount');
+  document.getElementById('txt_rule1title').textContent = t('rule1title');
+  document.getElementById('txt_rule1body').textContent = t('rule1body');
+  document.getElementById('txt_rule2title').textContent = t('rule2title');
+  document.getElementById('txt_rule2train').textContent = t('rule2train');
+  document.getElementById('txt_rule2car').textContent = t('rule2car');
+  document.getElementById('txt_rule3title').textContent = t('rule3title');
+  document.getElementById('txt_rule3body').textContent = t('rule3body');
+  document.getElementById('btn_begin').textContent = t('beginBtn');
+  document.getElementById('btn_modeLocal').textContent = t('modeLocal');
+  document.getElementById('btn_modeHost').textContent = t('modeHost');
+  document.getElementById('btn_modeJoin').textContent = t('modeJoin');
+  document.getElementById('txt_enterCode').textContent = t('enterCode');
+  document.getElementById('joinCodeInput').placeholder = t('codePlaceholder');
+  document.getElementById('btn_searchCode').textContent = t('searchCode');
+  document.getElementById('txt_playerCountTitle').textContent = t('playerCountTitle');
+  document.getElementById('txt_playerNameTitle').textContent = t('playerNameTitle');
+  document.getElementById('txt_roomCodeLabel').textContent = t('roomCodeLabel');
+  document.getElementById('txt_shareHint').textContent = t('shareHint');
+  document.getElementById('waitingForHostHint').textContent = t('waitingHostHint');
+  document.getElementById('choiceCardTitle').textContent = t('choiceTitle');
+  document.getElementById('localHint').textContent = t('localHint');
+  document.getElementById('btn_resetChoices').textContent = t('resetChoicesBtn');
+  document.getElementById('reflectionBox').querySelector('div').textContent = t('reflectionPrompt');
+  document.getElementById('btn_downloadCsv').textContent = t('downloadBtn');
+  document.getElementById('setupReplayBtn').textContent = t('setupReplayBtn');
+
+  // data-i18n属性を持つ要素はまとめて処理
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+
+  // 現在の画面の状態に応じた動的な文言も、可能な範囲で再計算する
+  const startBtn = document.getElementById('startBtn');
+  if(startBtn){
+    startBtn.textContent = (currentMode === 'online-host') ? t('createRoomBtn') : t('startGameBtn');
+  }
+  if(currentMode === 'online-host'){
+    renderHostNameInput();
+  } else if(currentMode === 'local' && !gameInProgress){
+    renderPlayerInputs(parseInt(document.getElementById('countDisp').textContent));
+  }
+  if(players.length && document.getElementById('roomPlayersStatus')){
+    renderRoomPlayersStatus();
+  }
+  if(!document.getElementById('screen-game').classList.contains('hidden')){
+    const p = periodOf(turn);
+    document.getElementById('turnLabel').textContent = `TURN ${turn} / ${TOTAL_TURNS}`;
+    renderPeriodLabelTextOnly(p);
+    if(isOnline){
+      if(onlinePhase === 'results'){ renderOnlineResults(p); } else { renderOnlineChoiceGrid(); }
+    } else {
+      if(!document.getElementById('resultCard').classList.contains('hidden')){
+        refreshLocalResultTitleIfVisible(p);
+        renderReflectionButtons();
+        updateNextBtnState();
+      } else {
+        renderChoiceGrid();
+        updateConfirmBtnState();
+      }
+    }
+  }
+  if(!document.getElementById('screen-end').classList.contains('hidden') && players.length){
+    showEnd();
+  }
+}
+
+function toggleLang(){
+  LANG = (LANG === 'ja') ? 'en' : 'ja';
+  document.getElementById('htmlRoot').lang = LANG;
+  applyStaticText();
+}
+
+// ローカル版：結果画面が表示されている間に言語を切り替えても、結果タイトルの文言を追随させる
+function refreshLocalResultTitleIfVisible(p){
+  const carCount = Object.values(choices).filter(c=>c==='C').length;
+  const trainCount = Object.values(choices).filter(c=>c==='T').length;
+  const carAdvance = carAdvanceFor(p.name, players.length, carCount);
+  const trainAdvance = 4;
+  document.getElementById('resultTitle').textContent =
+    t('resultHeaderLocal')(periodDisplay(p.name), carCount, trainCount, carAdvance, trainAdvance);
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyB89Foy2nzejKw7JTbjSjMKucbl94MGUp4",
   authDomain: "transport-sugoroku.firebaseapp.com",
@@ -368,8 +683,8 @@ function resultRowHtml(color, name, mode, advance, pos){
   return `<div class="result-row">
     <span class="dot" style="background:${color}"></span>
     <span style="flex:1; font-size:20px;">${name}</span>
-    <span class="badge ${mode==='C'?'car':'train'}">${mode==='C'?'車 +'+advance+'マス':'電車 +'+advance+'マス'}</span>
-    <span style="font-size:18px; color:#6b6f74; width:130px; text-align:right;">現在地 ${pos}マス</span>
+    <span class="badge ${mode==='C'?'car':'train'}">${t('modeWord')(mode)} +${advance}${t('sqUnit')}</span>
+    <span style="font-size:18px; color:#6b6f74; width:130px; text-align:right;">${t('positionLabel')} ${pos}${t('sqUnit')}</span>
   </div>`;
 }
 
@@ -403,11 +718,11 @@ function setMode(m){
   document.getElementById('roomCodeDisplay').classList.add('hidden');
   const startBtn = document.getElementById('startBtn');
   if(m==='online-host'){
-    startBtn.textContent = 'ルームを作成する';
+    startBtn.textContent = t('createRoomBtn');
     startBtn.onclick = createRoom;
     renderHostNameInput();
   } else {
-    startBtn.textContent = 'ゲーム開始 → 1ターン目';
+    startBtn.textContent = t('startGameBtn');
     startBtn.onclick = startGame;
     if(m==='local'){
       renderPlayerInputs(parseInt(document.getElementById('countDisp').textContent));
@@ -420,7 +735,7 @@ function genRoomCode(){
 }
 
 function createRoom(){
-  if(!firebaseReady){ alert('オンライン機能を読み込めませんでした。インターネット接続を確認し、ページを再読み込みしてください。'); return; }
+  if(!firebaseReady){ alert(t('alert_firebaseFail')); return; }
   const n = parseInt(document.getElementById('countDisp').textContent);
   const newPlayers = [];
   for(let i=0;i<n;i++){
@@ -446,14 +761,14 @@ function createRoom(){
     document.getElementById('roomCodeText').textContent = roomCode;
     attachRoomListener();
   }).catch(err=>{
-    alert('ルーム作成に失敗しました： ' + err.message);
+    alert(t('alert_createRoomFail')(err.message));
   });
 }
 
 function renderRoomPlayersStatus(){
   const el = document.getElementById('roomPlayersStatus');
   if(!el || !players.length) return;
-  el.innerHTML = players.map(p=>`<span style="display:inline-block; margin:3px 6px; padding:5px 12px; border-radius:14px; background:${p.connected?p.color:'#ddd'}; color:${p.connected?'#fff':'#666'}; font-size:13px;">${p.name}${p.connected?' ✓':'（未参加）'}</span>`).join('');
+  el.innerHTML = players.map(p=>`<span style="display:inline-block; margin:3px 6px; padding:5px 12px; border-radius:14px; background:${p.connected?p.color:'#ddd'}; color:${p.connected?'#fff':'#666'}; font-size:13px;">${p.name}${p.connected?' ✓':t('notJoined')}</span>`).join('');
 
   // 全員が参加するまで、ホストは「ゲームを開始する」を押せないようにする
   const beginBtn = document.getElementById('hostBeginBtn');
@@ -461,19 +776,19 @@ function renderRoomPlayersStatus(){
     const connectedCount = players.filter(p=>p.connected).length;
     const allConnected = connectedCount === players.length;
     beginBtn.disabled = !allConnected;
-    beginBtn.textContent = allConnected ? 'ゲームを開始する' : `全員の参加待ち（${connectedCount}/${players.length}人）`;
+    beginBtn.textContent = allConnected ? t('hostBeginBtnReady') : t('waitingJoinCount')({connected:connectedCount, total:players.length});
   }
 }
 
 function hostBeginGame(){
   if(isOnline && players.length && !players.every(p=>p.connected)){
-    alert('まだ参加していない人がいます。全員が参加するまで開始できません。');
+    alert(t('alert_notAllJoined'));
     return;
   }
   gameInProgress = true;
   if(isOnline && roomRef){
     roomRef.update({started:true}).catch(err=>{
-      alert('ゲーム開始の通知に失敗しました： ' + err.message);
+      alert(t('alert_startNotifyFail')(err.message));
     });
   }
   document.getElementById('screen-setup').classList.add('hidden');
@@ -489,13 +804,13 @@ let joinListRef = null; // 参加待ちの一覧をリアルタイム監視す�
 function renderJoinPlayerList(data){
   const listEl = document.getElementById('joinPlayerList');
   data.players.forEach((p,i)=>{ listEl.dataset['name'+i] = p.name; });
-  listEl.innerHTML = '<div style="margin-bottom:6px;">参加する枠をタップし、あなたの名前を入力してください：</div>' + data.players.map((p,i)=>
-    `<button class="ghost" style="margin:4px;" ${p.connected?'disabled':''} onclick="claimPlayer(${i})">${p.name}${p.connected?'（参加済み）':''}</button>`
+  listEl.innerHTML = `<div style="margin-bottom:6px;">${t('joinTapHint')}</div>` + data.players.map((p,i)=>
+    `<button class="ghost" style="margin:4px;" ${p.connected?'disabled':''} onclick="claimPlayer(${i})">${p.name}${p.connected?t('joined'):''}</button>`
   ).join('');
 }
 
 function joinRoom(){
-  if(!firebaseReady){ alert('オンライン機能を読み込めませんでした。インターネット接続を確認し、ページを再読み込みしてください。'); return; }
+  if(!firebaseReady){ alert(t('alert_firebaseFail')); return; }
   const code = document.getElementById('joinCodeInput').value.trim();
   if(!code) return;
   if(joinListRef){ joinListRef.off('value'); } // 前回検索した部屋の監視を止めてから、新しい部屋を監視する
@@ -508,13 +823,13 @@ function joinRoom(){
     if(myPlayerId !== null) return;
     renderJoinPlayerList(data);
   }, err=>{
-    alert('ルームの監視に失敗しました： ' + err.message);
+    alert(t('alert_watchRoomFail')(err.message));
   });
 }
 
 function claimPlayer(id){
   const defaultName = document.getElementById('joinPlayerList').dataset['name'+id] || ('P'+(id+1));
-  const inputName = prompt('あなたの名前を入力してください', defaultName);
+  const inputName = prompt(t('enterYourName'), defaultName);
   if(inputName === null) return; // キャンセル
   const finalName = inputName.trim() || defaultName;
   // 通信中に他の枠を連打されるのを防ぐため、押した瞬間に一覧のボタンを全部押せなくする
@@ -522,7 +837,7 @@ function claimPlayer(id){
   const allBtns = listEl.querySelectorAll('button');
   allBtns.forEach(b => b.disabled = true);
   const clickedBtn = listEl.querySelector(`button[onclick="claimPlayer(${id})"]`);
-  if(clickedBtn) clickedBtn.textContent = '参加中…';
+  if(clickedBtn) clickedBtn.textContent = t('joining');
   myPlayerId = id; isOnline = true; isHost = false;
   roomRef = db.ref('rooms/'+roomCode);
   roomRef.child('players/'+id).update({ connected:true, name:finalName }).then(()=>{
@@ -536,7 +851,7 @@ function claimPlayer(id){
     document.getElementById('hostBeginBtn').classList.add('hidden');
     document.getElementById('waitingForHostHint').classList.remove('hidden');
   }).catch(err=>{
-    alert('参加に失敗しました： ' + err.message);
+    alert(t('alert_joinFail')(err.message));
     myPlayerId = null; isOnline = false; // 失敗したので未参加の状態に戻し、一覧のリアルタイム更新を再開する
     // 失敗した場合はやり直せるようボタンを元に戻す
     allBtns.forEach(b => b.disabled = false);
@@ -585,13 +900,17 @@ function attachRoomListener(){
   });
 }
 
-function renderPeriodLabel(p){
+function renderPeriodLabelTextOnly(p){
   const el = document.getElementById('periodLabel');
-  el.innerHTML = `<span style="display:inline-flex; align-items:center; padding:8px 22px; border-radius:24px; background:${p.color}; color:#fff; font-weight:700; font-size:22px;">${p.name}</span>`;
+  el.innerHTML = `<span style="display:inline-flex; align-items:center; padding:8px 22px; border-radius:24px; background:${p.color}; color:#fff; font-weight:700; font-size:22px;">${periodDisplay(p.name)}</span>`;
   const iconEl = document.getElementById('periodIcon');
   if(iconEl){ iconEl.textContent = p.icon; }
   const gameScreen = document.getElementById('screen-game');
   if(gameScreen){ gameScreen.style.background = p.bg; }
+}
+
+function renderPeriodLabel(p){
+  renderPeriodLabelTextOnly(p);
   showPeriodTransition(p);
 }
 
@@ -603,7 +922,7 @@ function showPeriodTransition(p){
   const overlay = document.getElementById('periodTransition');
   if(!overlay) return;
   document.getElementById('periodTransitionIcon').textContent = p.icon;
-  document.getElementById('periodTransitionLabel').textContent = p.name;
+  document.getElementById('periodTransitionLabel').textContent = periodDisplay(p.name);
   overlay.style.background = p.bg;
   overlay.style.color = (p.name === '朝' || p.name === '昼') ? '#22262B' : '#FFFFFF';
   overlay.classList.add('show');
@@ -620,7 +939,7 @@ function reflectionOptionHtml(idPrefix, opt, selectedValue, onclickExpr){
   return `<div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
     <button type="button" class="reflect-btn ${opt.value===selectedValue?'sel':''}" id="reflect-${idPrefix}-${opt.value}"
       style="background:${opt.color};" onclick="${onclickExpr}">${reflectFaceSvg(opt.value)}</button>
-    <span style="font-size:15px; color:#6b6f74; text-align:center; width:150px; line-height:1.3; font-weight:600; white-space:nowrap;">${opt.label}</span>
+    <span style="font-size:15px; color:#6b6f74; text-align:center; width:150px; line-height:1.3; font-weight:600; white-space:nowrap;">${t(opt.labelKey)}</span>
   </div>`;
 }
 
@@ -670,10 +989,9 @@ function renderOnlineResults(p){
   const trainCount = turnLog.filter(l=>l.mode==='T').length;
   const carAdv = turnLog.find(l=>l.mode==='C');
   const trainAdv = turnLog.find(l=>l.mode==='T');
-  document.getElementById('resultTitle').textContent =
-    `結果：${p.name}／車 ${carCount}人・電車 ${trainCount}人` +
-    (carAdv ? `（車 ${carAdv.advance}マス` : '（') +
-    (trainAdv ? `／電車 ${trainAdv.advance}マス）` : '）');
+  const carPart = carAdv ? (LANG==='ja' ? `（車 ${carAdv.advance}マス` : ` (Car +${carAdv.advance} sq`) : (LANG==='ja' ? '（' : ' (');
+  const trainPart = trainAdv ? (LANG==='ja' ? `／電車 ${trainAdv.advance}マス）` : ` / Train +${trainAdv.advance} sq)`) : (LANG==='ja' ? '）' : ')');
+  document.getElementById('resultTitle').textContent = t('resultHeaderOnline')(periodDisplay(p.name), carCount, trainCount, carPart, trainPart);
 
   const resultsHtml = turnLog.map(r=>{
     const pl = players.find(pp=>pp.id===r.playerId) || {color:'#999'};
@@ -693,8 +1011,8 @@ function renderOnlineResults(p){
     nextBtn.classList.remove('hidden');
     nextBtn.disabled = !allReflected;
     nextBtn.textContent = allReflected
-      ? ((turn>=TOTAL_TURNS) ? '【ホスト】最終結果を見る →' : '【ホスト】次のターンへ →')
-      : `全員の振り返り待ち（${reflectedCount}/${players.length}人）`;
+      ? ((turn>=TOTAL_TURNS) ? t('hostViewFinalBtn') : t('hostNextTurnBtn'))
+      : t('waitingReflectionCount')({done:reflectedCount, total:players.length});
     nextBtn.onclick = hostAdvanceTurn;
   } else {
     nextBtn.classList.add('hidden');
@@ -706,7 +1024,7 @@ function renderOnlineResults(p){
     waitHint.className = 'hint';
     document.getElementById('resultCard').appendChild(waitHint);
   }
-  waitHint.textContent = isHost ? '' : 'ホストが次のターンへ進めるのを待っています…';
+  waitHint.textContent = isHost ? '' : t('hostWillAdvance');
 }
 
 function hostAdvanceTurn(){
@@ -716,13 +1034,13 @@ function hostAdvanceTurn(){
     const entry = turnLog.find(l=>l.playerId===pl.id);
     return entry && entry.reflection;
   });
-  if(!allReflected){ alert('まだ振り返りを選んでいない人がいます'); return; }
+  if(!allReflected){ alert(t('alert_notAllReflected')); return; }
   const nextTurnNum = turn + 1;
   const updatePayload = (nextTurnNum > TOTAL_TURNS)
     ? { phase:'ended' }
     : { turn: nextTurnNum, phase:'choosing' };
   roomRef.update(updatePayload).catch(err=>{
-    alert('次のターンへの更新に失敗しました： ' + err.message);
+    alert(t('alert_advanceFail')(err.message));
   });
 }
 
@@ -736,7 +1054,7 @@ function renderOnlineChoiceGrid(){
     const chosen = choices[pl.id];
     if(mine){
       div.innerHTML = `
-        <div class="pname"><span class="dot" style="background:${pl.color}"></span>${pl.name}（あなた）</div>
+        <div class="pname"><span class="dot" style="background:${pl.color}"></span>${pl.name}${t('you')}</div>
         <div class="modebtns">
           <button class="modebtn car ${chosen==='C'?'sel':''}" onclick="pickOnline('C')">
             <span style="font-size:40px; line-height:1;">🚗</span><span style="font-size:11px; font-weight:700; letter-spacing:0.5px;">CAR</span>
@@ -748,7 +1066,7 @@ function renderOnlineChoiceGrid(){
     } else {
       div.innerHTML = `
         <div class="pname"><span class="dot" style="background:${pl.color}"></span>${pl.name}</div>
-        <div class="hint">${chosen ? '選択済み ✓' : (pl.connected ? '選択中…' : '未参加')}</div>`;
+        <div class="hint">${chosen ? t('selectedMark') : (pl.connected ? t('choosingMark') : t('notJoinedMark'))}</div>`;
     }
     grid.appendChild(div);
   });
@@ -759,19 +1077,19 @@ function renderOnlineChoiceGrid(){
   if(isHost){
     const btn = document.createElement('button');
     btn.className = 'primary';
-    btn.textContent = allChosen ? '【ホスト】このターンを確定して次へ →' : `【ホスト】全員の選択待ち（${Object.keys(choices).length}/${players.length}人）`;
+    btn.textContent = allChosen ? t('hostConfirmBtn')() : t('hostWaitingChoiceCount')({done:Object.keys(choices).length, total:players.length});
     btn.disabled = !allChosen;
     btn.onclick = hostResolveTurn;
     onlineControls.appendChild(btn);
     const hint = document.createElement('div');
     hint.className = 'hint';
     hint.style.width = '100%';
-    hint.textContent = allChosen ? '全員そろいました。確定できます。' : '全員の選択がそろうまでボタンは押せません';
+    hint.textContent = allChosen ? t('everyoneReady') : t('waitEveryoneChoose');
     onlineControls.appendChild(hint);
   } else {
     const hint = document.createElement('div');
     hint.className = 'hint';
-    hint.textContent = 'ホストが「このターンを確定」を押すと次のターンに進みます';
+    hint.textContent = t('hostWillConfirm');
     onlineControls.appendChild(hint);
   }
 }
@@ -779,13 +1097,13 @@ function renderOnlineChoiceGrid(){
 function pickOnline(mode){
   if(myPlayerId===null || !roomRef) return;
   roomRef.child('choices/'+myPlayerId).set(mode).catch(err=>{
-    alert('選択の送信に失敗しました： ' + err.message);
+    alert(t('alert_sendChoiceFail')(err.message));
   });
 }
 
 function hostResolveTurn(){
   if(!isHost) return;
-  if(!players.every(pl => !!choices[pl.id])){ alert('まだ選んでいない人がいます'); return; }
+  if(!players.every(pl => !!choices[pl.id])){ alert(t('alert_notAllChosen')); return; }
   const p = periodOf(turn);
   let carCount=0, trainCount=0;
   players.forEach(pl=>{ if(choices[pl.id]==='C') carCount++; else if(choices[pl.id]==='T') trainCount++; });
@@ -819,12 +1137,12 @@ function hostResolveTurn(){
     players: newPlayers, log: newLog, choices: {},
     phase: 'results'
   }).catch(err=>{
-    alert('更新に失敗しました： ' + err.message);
+    alert(t('alert_updateFail')(err.message));
   });
 }
 
 function onlineNewSession(){
-  if(!isHost){ alert('ホストのみ操作できます'); return; }
+  if(!isHost){ alert(t('alert_hostOnly')); return; }
   const resetPlayers = players.map(pl => ({...pl, pos:0, co2:0, money:0, nuisance:0}));
   roomRef.update({
     sessionNumber: sessionNumber+1, turn:1, choices:{}, players: resetPlayers, phase:'choosing'
@@ -832,7 +1150,7 @@ function onlineNewSession(){
     document.getElementById('screen-end').classList.add('hidden');
     document.getElementById('screen-game').classList.remove('hidden');
   }).catch(err=>{
-    alert('新しいセッションの開始に失敗しました： ' + err.message);
+    alert(t('alert_newSessionFail')(err.message));
   });
 }
 
@@ -854,7 +1172,7 @@ function renderPlayerInputs(n){
     const row = document.createElement('div');
     row.className='player-setup-row';
     row.innerHTML = `<div class="swatch" style="background:${COLORS[i]}"></div>
-      <input type="text" placeholder="プレイヤー${i+1}" id="pname${i}">`;
+      <input type="text" placeholder="${t('playerNamePlaceholder')(i+1)}" id="pname${i}">`;
     box.appendChild(row);
   }
 }
@@ -862,12 +1180,13 @@ function renderHostNameInput(){
   const box = document.getElementById('playerInputs');
   box.innerHTML = `<div class="player-setup-row">
       <div class="swatch" style="background:${COLORS[0]}"></div>
-      <input type="text" placeholder="あなたの名前（ホスト）" id="pname0">
+      <input type="text" placeholder="${t('hostNamePlaceholder')}" id="pname0">
     </div>
-    <div style="font-size:13px; color:#666; margin-top:6px;">他の参加者は、ルームに参加するときにそれぞれ自分の名前を入力します</div>`;
+    <div style="font-size:13px; color:#666; margin-top:6px;">${t('hostNameHint')}</div>`;
 }
 renderPlayerInputs(4);
 setMode('local');
+applyStaticText();
 
 function startGame(){
   gameInProgress = true;
@@ -966,14 +1285,15 @@ function renderChoiceGrid(){
   players.forEach(pl=>{
     const div = document.createElement('div');
     div.className='p-choice';
+    const chosen = choices[pl.id];
     div.innerHTML = `
       <div class="pname"><span class="dot" style="background:${pl.color}"></span>${pl.name}</div>
       <div class="modebtns">
-        <button class="modebtn car" onclick="pick(${pl.id},'C')" id="btnC${pl.id}">
+        <button class="modebtn car ${chosen==='C'?'sel':''}" onclick="pick(${pl.id},'C')" id="btnC${pl.id}">
           <span style="font-size:40px; line-height:1;">🚗</span>
           <span style="font-size:11px; font-weight:700; letter-spacing:0.5px;">CAR</span>
         </button>
-        <button class="modebtn train" onclick="pick(${pl.id},'T')" id="btnT${pl.id}">
+        <button class="modebtn train ${chosen==='T'?'sel':''}" onclick="pick(${pl.id},'T')" id="btnT${pl.id}">
           <span style="font-size:40px; line-height:1;">🚃</span>
           <span style="font-size:11px; font-weight:700; letter-spacing:0.5px;">TRAIN</span>
         </button>
@@ -996,7 +1316,7 @@ function updateConfirmBtnState(){
   if(!confirmBtn) return;
   const allChosen = players.every(pl => !!choices[pl.id]);
   confirmBtn.disabled = !allChosen;
-  confirmBtn.textContent = allChosen ? 'このターンを確定 →' : `全員の選択待ち（${Object.keys(choices).length}/${players.length}人）`;
+  confirmBtn.textContent = allChosen ? t('confirmTurnBtn') : t('waitingChoiceCount')({done:Object.keys(choices).length, total:players.length});
 }
 
 function resetChoices(){
@@ -1029,7 +1349,7 @@ function undoTurn(){
 function resolveTurn(){
   const missing = players.filter(pl=>!choices[pl.id]);
   if(missing.length>0){
-    alert('未選択のプレイヤーがいます：' + missing.map(p=>p.name).join('、'));
+    alert(t('alert_missingPlayers')(missing.map(p=>p.name).join('、')));
     return;
   }
   const confirmBtn = document.getElementById('confirmBtn');
@@ -1068,7 +1388,7 @@ function resolveTurn(){
   });
 
   document.getElementById('resultTitle').textContent =
-    `結果：${p.name}／車 ${carCount}人・電車 ${trainCount}人（車 ${carAdvance}マス／電車 ${trainAdvance}マス）`;
+    t('resultHeaderLocal')(periodDisplay(p.name), carCount, trainCount, carAdvance, trainAdvance);
   document.getElementById('resultList').innerHTML = resultsHtml;
   document.getElementById('resultCard').classList.remove('hidden');
   renderTracks();
@@ -1079,10 +1399,11 @@ function resolveTurn(){
 }
 
 // ターン終わりのプチ振り返り（3段階：1=失敗した…／2=まぁ、こんなものか／3=成功！！）
+// labelKeyで言語ごとの文言を都度引く（言語切り替え時にも追随させるため固定文字列を持たない）
 const REFLECTION_OPTIONS = [
-  {value:'1', color:'#D9534F', label:'失敗…'},
-  {value:'2', color:'#E8C34A', label:'まぁ、こんなものか'},
-  {value:'3', color:'#5CA83C', label:'成功！！'}
+  {value:'1', color:'#D9534F', labelKey:'reflectFail'},
+  {value:'2', color:'#E8C34A', labelKey:'reflectSoso'},
+  {value:'3', color:'#5CA83C', labelKey:'reflectSuccess'}
 ];
 
 // 5段階の顔アイコン(SVG)を生成。value: 1(悪い)〜5(良い)
@@ -1104,16 +1425,20 @@ function reflectFaceSvg(value){
 function renderReflectionButtons(){
   const el = document.getElementById('reflectionButtons');
   if(!el) return;
-  el.innerHTML = players.map(pl => `
+  el.innerHTML = players.map(pl => {
+    const entry = log.slice().reverse().find(l => l.session===sessionNumber && l.turn===turn && l.playerId===pl.id);
+    const currentVal = entry ? entry.reflection : null;
+    return `
     <div style="display:flex; flex-direction:column; align-items:center; gap:6px; min-width:90px;">
       <div style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px;">
         <span class="dot" style="background:${pl.color}; width:10px; height:10px; border-radius:50%; display:inline-block;"></span>${pl.name}
       </div>
       <div style="display:flex; gap:28px;">
-        ${REFLECTION_OPTIONS.map(opt => reflectionOptionHtml(pl.id, opt, null, `pickReflection('${pl.id}','${opt.value}')`)).join('')}
+        ${REFLECTION_OPTIONS.map(opt => reflectionOptionHtml(pl.id, opt, currentVal, `pickReflection('${pl.id}','${opt.value}')`)).join('')}
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function pickReflection(playerId, value){
@@ -1137,8 +1462,8 @@ function updateNextBtnState(){
     return entry && entry.reflection;
   });
   nextBtn.disabled = !allAnswered;
-  const baseLabel = (turn>=TOTAL_TURNS) ? '最終結果を見る →' : '次のターンへ →';
-  nextBtn.textContent = allAnswered ? baseLabel : `全員の振り返り待ち（${sessLogNow.filter(l=>l.reflection).length}/${players.length}人）`;
+  const baseLabel = (turn>=TOTAL_TURNS) ? t('viewFinalBtn') : t('nextTurnBtn');
+  nextBtn.textContent = allAnswered ? baseLabel : t('waitingReflectionCount')({done:sessLogNow.filter(l=>l.reflection).length, total:players.length});
 }
 
 function renderChart(elId, arr, getter, unit, fmt){
@@ -1162,7 +1487,7 @@ function nextTurn(){
       const entry = sessLogNow.find(l=>l.playerId===pl.id);
       return entry && entry.reflection;
     });
-    if(!allAnswered){ alert('全員が振り返りを選ぶまで、次のターンには進めません'); return; }
+    if(!allAnswered){ alert(t('alert_needAllReflections')); return; }
   }
   if(turn>=TOTAL_TURNS){
     showEnd();
@@ -1291,16 +1616,16 @@ function downloadCSV(){
 function showEnd(){
   document.getElementById('screen-game').classList.add('hidden');
   document.getElementById('screen-end').classList.remove('hidden');
-  document.getElementById('endTitle').textContent = `${TOTAL_TURNS}ターン終了 — 結果発表（セッション${sessionNumber}）`;
+  document.getElementById('endTitle').textContent = t('endTitle')(TOTAL_TURNS, sessionNumber);
   const replayBtn = document.getElementById('replayBtn');
   const setupReplayBtn = document.getElementById('setupReplayBtn');
   if(isOnline){
-    replayBtn.textContent = isHost ? `【ホスト】もう一度プレイする（セッション${sessionNumber+1}）` : 'ホストの再戦を待っています';
+    replayBtn.textContent = isHost ? t('replayHost')(sessionNumber+1) : t('replayWaitHost');
     replayBtn.onclick = isHost ? onlineNewSession : null;
     replayBtn.disabled = !isHost;
     if(setupReplayBtn) setupReplayBtn.classList.add('hidden');
   } else {
-    replayBtn.textContent = `もう一度プレイする（セッション${sessionNumber+1}として記録されます）`;
+    replayBtn.textContent = t('replayLocal')(sessionNumber+1);
     replayBtn.onclick = newSession;
     replayBtn.disabled = false;
     if(setupReplayBtn) setupReplayBtn.classList.remove('hidden');
@@ -1321,23 +1646,23 @@ function showEnd(){
       <div class="rank-name">${pl.name}</div>
       <div class="rank-icons">${icons}</div>
       <div class="rank-stats">
-        到達 ${pl.pos}マス<br>
-        CO₂ ${pl.co2.toFixed(1)}kg／出費 ${pl.money.toLocaleString()}円
+        ${t('reached')} ${pl.pos}${t('sq')}<br>
+        ${t('co2Money')(pl.co2.toFixed(1), pl.money.toLocaleString())}
       </div>
     </div>
   `;
   }).join('');
-  renderChart('endCo2Chart', players, pl=>pl.co2, ' kg', v=>v.toFixed(1));
-  renderChart('endMoneyChart', players, pl=>pl.money, ' 円', v=>v.toLocaleString());
+  renderChart('endCo2Chart', players, pl=>pl.co2, t('unitKg'), v=>v.toFixed(1));
+  renderChart('endMoneyChart', players, pl=>pl.money, t('unitYen'), v=>v.toLocaleString());
 
   // 社会全体（全員合計）のCO2排出量：合計だけを大きく目立たせて表示
   const socialTotal = sessLog.reduce((s,l)=>s+l.co2Turn, 0);
   const socialEl = document.getElementById('endSocialCo2Chart');
   socialEl.innerHTML = `
     <div style="background:linear-gradient(135deg,#8B4C8C,#5D3A8C); border-radius:16px; padding:16px; text-align:center; color:#fff;">
-      <div style="font-size:13px; opacity:0.85; margin-bottom:4px;">みんなで合計</div>
+      <div style="font-size:13px; opacity:0.85; margin-bottom:4px;">${t('socialTotalLabel')}</div>
       <div style="font-size:34px; font-weight:800; line-height:1;">${socialTotal.toFixed(2)}<span style="font-size:16px; font-weight:700; margin-left:6px;">kg</span></div>
-      <div style="font-size:11px; opacity:0.85; margin-top:6px;">${players.length}人 × ${TOTAL_TURNS}ターンで排出したCO₂の合計</div>
+      <div style="font-size:11px; opacity:0.85; margin-top:6px;">${t('socialTotalSub')(players.length, TOTAL_TURNS)}</div>
     </div>`;
 }
 
