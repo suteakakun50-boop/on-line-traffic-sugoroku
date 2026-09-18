@@ -84,17 +84,14 @@
     position:relative; display:inline-block; max-width:100%; background:#fff; border-radius:0; padding:0;
     max-height:340px; overflow-y:auto; overflow-x:auto;
   }
-  .track-row{display:flex; gap:0; width:max-content;}
+  .track-row{display:flex; gap:6px; width:max-content;}
   .sq{
-    width:80px; height:80px; border-radius:0; background:#fff; box-sizing:border-box;
-    border-top:1px solid var(--asphalt); border-left:1px solid var(--asphalt);
+    width:80px; height:80px; border-radius:14px; background:#EDEAE0; box-sizing:border-box;
+    border:2px solid var(--asphalt);
     flex:0 0 auto; position:relative;
     display:flex; flex-wrap:wrap; align-content:center; justify-content:center;
     gap:4px; padding:4px; overflow:visible;
   }
-  .track-row:last-child .sq{ border-bottom:1px solid var(--asphalt); }
-  .track-row .sq:last-child{ border-right:1px solid var(--asphalt); }
-  .sq:nth-child(5n+1){ background:#FFF6E5; }
   /* ---- 時間帯が変わった瞬間に出す演出（大きく表示→フェードアウト） ---- */
   .period-transition{
     position:absolute; inset:0; z-index:50; border-radius:20px;
@@ -418,8 +415,8 @@ const I18N = {
     alert_needAllReflections: '全員が振り返りを選ぶまで、次のターンには進めません',
   },
   en: {
-    pageTitle: 'Online Traffic Sugoroku',
-    appTitle: 'Traffic Sugoroku',
+    pageTitle: 'Online Transport Sugoroku',
+    appTitle: 'Transport Sugoroku',
     langToggleLabel: '日本語',
     howToPlay: 'How to Play',
     playerCount: 'Play with 4–8 people',
@@ -1228,32 +1225,79 @@ function renderTracks(){
     (bySquare[pl.pos] = bySquare[pl.pos] || []).push(pl);
   });
 
-  // 1行あたりのマス数：常に最低10マス、画面が広ければ最大20マスまで表示を広げる
-  // ※ SQ_SIZEとminPerRowの値は、CSSの @media (max-width: 480px) 内の .sq サイズと合わせておくこと
+  // 1行あたりのマス数：横スクロールが出ないよう、画面幅にきっちり収まる数に自動調整する
+  // （折り返し地点で1列分はみ出すため、その分を差し引いて計算）
+  // ※ SQ_SIZEの値は、CSSの @media (max-width: 480px) 内の .sq サイズと合わせておくこと
   const isNarrowScreen = window.innerWidth <= 480;
   const SQ_SIZE = isNarrowScreen ? 56 : 80;
   const availableWidth = el.parentElement.clientWidth || 800;
-  const fitByWidth = Math.floor(availableWidth / SQ_SIZE);
-  const minPerRow = isNarrowScreen ? 6 : 10;
-  const squaresPerRow = Math.max(minPerRow, Math.min(20, fitByWidth));
+  const GAP = 0; // マス同士は隙間なくつなげる
+  const fitByWidth = Math.floor(availableWidth / SQ_SIZE) - 1; // 折り返し用の1列分を確保
+  const C = Math.max(4, Math.min(20, fitByWidth)); // 1行あたりのマス数（最初の行の本数）
 
-  // 行は必ず squaresPerRow 個ぴったりで埋める（半端な最終行を作らない＝空白を出さない）
-  const MIN_ROWS = 1;
-  const rowsNeeded = Math.max(MIN_ROWS, Math.ceil((trackLen + 1) / squaresPerRow));
-  const totalRows = rowsNeeded;
-  const gridLen = totalRows * squaresPerRow - 1; // このグリッドで実際に描画する最終マス番号
+  // 道が一本につながって左右に折り返す「スネーク型」レイアウト（写真と同じ形）：
+  // 折り返し地点の出っ張りマスも、飾りではなく番号付きの実在するマスとして扱う
+  const ROW_GAP = Math.round(SQ_SIZE * 0.2); // 行間の余白：マス同士の隙間よりは少し広めにする
+
+  // 各行のマス（{col, s}の配列）を先に組み立てる。折り返し地点は行の端に1マスだけ張り出す形。
+  const rows = [];
+  let s = 0;
+  let i = 0;
+  while(true){
+    const isFirst = (i === 0);
+    const forward = (i % 2 === 0); // 偶数行＝左→右、奇数行＝右→左
+    const cells = [];
+
+    if(!isFirst){
+      // 前の行から降りてくる折り返しマス（入口）
+      const incomingCol = (i % 2 === 1) ? C : 0;
+      cells.push({ col: incomingCol, s, corner:'in' }); s++;
+    }
+    const middleCount = isFirst ? C : (C - 1);
+    for(let k=0; k<middleCount; k++){
+      const col = isFirst ? k : (forward ? (1 + k) : (C - 1 - k));
+      cells.push({ col, s }); s++;
+    }
+
+    if(s > trackLen){
+      rows.push({ cells, hasOutgoing:false });
+      break;
+    } else {
+      // 次の行へつながる折り返しマス（出口）
+      const outgoingCol = (i % 2 === 0) ? C : 0;
+      cells.push({ col: outgoingCol, s, corner:'out' }); s++;
+      rows.push({ cells, hasOutgoing:true });
+      i++;
+    }
+  }
+  const totalCols = rows.length > 1 ? (C + 1) : C;
+
   let leaderRowEl = null;
 
-  for(let r=0; r<totalRows; r++){
+  rows.forEach(({cells}, r)=>{
+    const isLastRow = (r === rows.length - 1);
     const rowEl = document.createElement('div');
     rowEl.className = 'track-row';
-    const rowStart = r * squaresPerRow;
-    const rowEnd = Math.min(rowStart + squaresPerRow - 1, gridLen);
+    rowEl.style.display = 'grid';
+    rowEl.style.gridTemplateColumns = `repeat(${totalCols}, ${SQ_SIZE}px)`;
+    rowEl.style.gap = GAP + 'px';
+    if(!isLastRow){ rowEl.style.marginBottom = ROW_GAP + 'px'; }
 
-    for(let s=rowStart; s<=rowEnd; s++){
+    let rowMin = Infinity, rowMax = -Infinity;
+    cells.forEach(({col, s, corner})=>{
+      rowMin = Math.min(rowMin, s); rowMax = Math.max(rowMax, s);
       const sq = document.createElement('div');
       sq.className = 'sq' + (s>0?' fog':'');
+      sq.style.gridColumn = String(col + 1);
+      sq.style.gridRow = '1';
       sq.style.position = 'relative';
+      if(corner === 'in'){
+        // 入口マス：隙間の中央に向けて少し上へ寄せる
+        sq.style.top = '-' + (ROW_GAP/2) + 'px';
+      } else if(corner === 'out'){
+        // 出口マス：隙間の中央に向けて少し下へ寄せる（2つがちょうど隙間の真ん中でくっつく）
+        sq.style.top = (ROW_GAP/2) + 'px';
+      }
       const num = document.createElement('div');
       num.textContent = s;
       num.style.cssText = 'position:absolute; top:2px; left:4px; font-size:11px; font-weight:700; color:#9aa0a8; z-index:0;';
@@ -1266,10 +1310,11 @@ function renderTracks(){
         sq.appendChild(tok);
       });
       rowEl.appendChild(sq);
-    }
+    });
+
     el.appendChild(rowEl);
-    if(maxPos >= rowStart && maxPos <= rowEnd){ leaderRowEl = rowEl; }
-  }
+    if(maxPos >= rowMin && maxPos <= rowMax){ leaderRowEl = rowEl; }
+  });
 
   // 駒が進んでも見失わないよう、一番進んでいる駒がある行まで自動スクロール
   requestAnimationFrame(()=>{
